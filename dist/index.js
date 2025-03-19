@@ -16,6 +16,7 @@ const express_1 = __importDefault(require("express"));
 const db_1 = require("./db");
 const dotenv_1 = __importDefault(require("dotenv"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const middleware_1 = require("./middleware");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -59,12 +60,42 @@ app.post('/api/v1/signin', (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 }));
-app.post('api/v1/content', (req, res) => {
-});
-app.get('api/v1/content', (req, res) => {
-});
-app.delete('api/v1/content', (req, res) => {
-});
+app.post('/api/v1/content', middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const link = req.body.link;
+    const type = req.body.type;
+    yield db_1.ContentModel.create({
+        link,
+        type,
+        //@ts-ignore
+        userId: req.userId,
+        tags: []
+    });
+    res.json({
+        msg: "Content created"
+    });
+}));
+app.get('/api/v1/content', middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    //@ts-ignore
+    const userId = req.userId;
+    const content = yield db_1.ContentModel.find({
+        userId: userId
+    }).populate("userId", "username");
+    res.json({
+        content
+    });
+}));
+app.delete('/api/v1/content', middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const contentId = req.body.contentId;
+    //@ts-ignore
+    const userId = req.userId;
+    const deleteContent = yield db_1.ContentModel.deleteMany({
+        contentId,
+        userId
+    });
+    res.json({
+        msg: "Content deleted"
+    });
+}));
 app.post('/api/brain/share', (req, res) => {
 });
 app.get('/api/brain/:shareLink', (req, res) => {
