@@ -15,9 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const db_1 = require("./db");
 const dotenv_1 = __importDefault(require("dotenv"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
+const jwtPass = process.env.JWT_PWD;
 app.post('/api/v1/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const username = req.body.username;
     const password = req.body.password;
@@ -36,10 +38,27 @@ app.post('/api/v1/signup', (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 }));
-app.post('api/v1/signin', (req, res) => {
+app.post('/api/v1/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const username = req.body.username;
     const password = req.body.password;
-});
+    const checkUser = yield db_1.UserModel.findOne({
+        username,
+        password
+    });
+    if (checkUser) {
+        const token = jsonwebtoken_1.default.sign({
+            id: checkUser._id
+        }, jwtPass);
+        res.json({
+            msg: token
+        });
+    }
+    else {
+        res.status(403).json({
+            msg: "Incorrect credentials"
+        });
+    }
+}));
 app.post('api/v1/content', (req, res) => {
 });
 app.get('api/v1/content', (req, res) => {
